@@ -1,5 +1,6 @@
 # Groupe_DigitalBank_Partie2
 Plateforme de gestion &amp; monitoring no-code
+
 **Contexte :** Restauration, Sécurisation et Modernisation d'une Plateforme Bancaire en Ligne 
 
 ## RÉSUMÉ EXÉCUTIF

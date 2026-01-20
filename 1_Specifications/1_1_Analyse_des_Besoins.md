@@ -4,7 +4,7 @@
 
 ##  a) PERSONAS :
 
-### 1️**ADMINISTRATEUR SYSTÈME**
+### 1️/ **ADMINISTRATEUR SYSTÈME**
 
 **Profil**
 - Nom : Marc Dupont
@@ -32,7 +32,7 @@
 
 ---
 
-### 2️**ANALYSTE DE SÉCURITÉ**
+### 2️/ **ANALYSTE DE SÉCURITÉ**
 
 **Profil**
 - Nom : Sophie Martin
@@ -62,7 +62,7 @@
 
 ---
 
-### 3️**AGENT DU SERVICE CLIENT**
+### 3️/ **AGENT DU SERVICE CLIENT**
 
 **Profil**
 - Nom : Jean Petit
@@ -92,7 +92,7 @@
 
 ---
 
-### 4️**CLIENT (Consultation Limitée)**
+### 4️/ **CLIENT (Consultation Limitée)**
 
 **Profil**
 - Nom : Marie Leclerc

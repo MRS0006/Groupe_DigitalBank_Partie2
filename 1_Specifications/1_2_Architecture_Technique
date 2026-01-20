@@ -1,0 +1,627 @@
+# PHASE 1.2 - ARCHITECTURE DE LA SOLUTION
+
+
+---
+
+##  RÉSUMÉ ARCHITECTURE
+
+### Principe Directeur
+**SIMPLICITÉ + VITESSE + FONCTIONNALITÉ**
+
+Nous utilisons une approche **No-Code/Low-Code maximale** pour :
+-  Éviter de coder des briques complexes (authentification, API, RBAC)
+-  Déployer rapidement (0 infrastructure complexe à configurer)
+-  Obtenir un produit fonctionnel dès J1
+-  Faciliter la collaboration entre développeurs
+-  Minimiser les bugs de sécurité (outils éprouvés)
+
+
+
+## Choix TECHNOLOGIQUE 
+
+### COUCHE 1 : BASE DE DONNÉES + API (No-Code)
+
+####  **SUPABASE** (Choix Principal)
+
+```
+PostgreSQL (restaurée Phase 1)
+        ↓
+   Supabase Cloud
+        ↓
+• Auth (MFA intégré) 
+• API REST auto-générée 
+• Row Level Security (RLS) 
+• Realtime subscriptions 
+• Storage pour fichiers 
+```
+
+**Pourquoi Supabase ?**
+-  PostgreSQL "out of the box" (compatible avec votre dump Phase 1)
+-  API REST auto-générée en 1 clic (CRUD sans code)
+-  Authentification MFA intégrée
+-  Row Level Security pour le RBAC
+-  Gratuit jusqu'à 500 MB données + 2 projets
+-  Déploiement instantané (cloud managed)
+-  Documentation excellente
+-  Pas besoin de configurer serveur/Docker
+
+**Alternatives rejetées :**
+-  Hasura : Plus complexe à configurer (besoin Docker)
+-  Xano : Payant (~$0 de trial, puis $$$)
+-  Directus : Trop d'overhead pour nos besoins simples
+
+---
+
+### COUCHE 2 : DASHBOARDS & VISUALISATION (No-Code)
+
+####  **METABASE** (Choix Principal)
+
+```
+Supabase (données)
+        ↓
+   Metabase Cloud
+        ↓
+• Dashboards drag-and-drop 
+• Alertes automatiques 
+• Rapports PDF 
+• Filtres interactifs 
+```
+
+**Pourquoi Metabase ?**
+-  Connexion Supabase en 2 clics
+-  Créer des dashboards complexes sans code
+-  Graphiques, cartes, tableaux automatiques
+-  Alertes SQL simples
+-  Export PDF/CSV d'un clic
+-  Gratuit version cloud (limité mais suffisant)
+-  Interface extrêmement intuitive
+-  Temps d'apprentissage : 1-2h max
+
+**Alternatives rejetées :**
+-  Grafana : Orienté infra, pas données métier
+-  Tableau : Trop complexe pour 2,5 jours
+-  Retool : Overkill (dashboard admin interne trop avancé)
+
+---
+
+### COUCHE 3 : AUTOMATISATION (No-Code)
+
+####  **N8N** (Choix Principal - Self-Hosted)
+
+```
+Supabase (données)
+        ↓
+    n8n Workflows
+        ↓
+• Détection fraude ML (API) 
+• Alertes email/Slack 
+• Webhooks 
+• Logs centralisés 
+```
+
+**Pourquoi n8n ?**
+-  Open-source et gratuit
+-  Déploiement facile (Docker Compose 1 ligne)
+-  Connexion Supabase native
+-  Appels API simples pour ML
+-  Emails/Slack notifications intégrés
+-  Interface drag-drop très intuitive
+-  Pas d'infrastructure complexe
+
+**Alternatives rejetées :**
+-  Zapier : Payant (~$30/mois)
+-  Make.com : Limité en version gratuite
+-  Custom code : Trop de temps pour 2,5j
+
+---
+
+### COUCHE 4 : MONITORING (Lightweight)
+
+####  **PROMETHEUS + GRAFANA** (Docker Compose)
+
+```
+Infrastructure
+        ↓
+  Prometheus (scrape)
+        ↓
+   Grafana (affiche)
+        ↓
+• Métriques CPU/RAM/Disque 
+• Alertes si seuil dépassé 
+• Dashboards temps réel 
+```
+
+**Pourquoi Prometheus + Grafana ?**
+-  Open-source et gratuit
+-  Docker Compose = 1 seul fichier
+-  Très peu de configuration
+-  Standar de l'industrie
+-  Exporte directement les métriques
+-  Grafana connexion en 2 clics
+
+**Alternative rejetée :**
+-  ELK Stack : Trop lourd pour un démo (3 services Docker)
+
+---
+
+### COUCHE 5 : ML - DÉTECTION FRAUDE
+
+####  **API FLASK SIMPLE** (Phase 1 individuelle)
+
+```
+Modèle ML entraîné (Phase 1)
+        ↓
+    Flask API (Python)
+        ↓
+     Deployed (Render/Railway)
+        ↓
+N8N l'appelle pour chaque transaction
+```
+
+**Pourquoi Flask ?**
+- Minimal (10 lignes de code)
+- Chargement du modèle.pkl en 1 ligne
+- Déploiement gratuit sur Render/Railway
+- Réponse en < 100ms
+
+---
+
+##  JUSTIFICATION DES CHOIX
+
+### Critère 1 : VITESSE DE DÉPLOIEMENT
+
+| Outil | Setup Time | Courbe Apprentissage | Notes |
+|-------|-----------|---------------------|-------|
+| **Supabase** | 10 min | 30 min |  Cloud managed |
+| Hasura | 30 min | 1h | Docker, config complexe |
+| Xano | 15 min | 45 min | Payant après trial |
+| **Metabase** | 5 min | 1h | Très intuitif |
+| Grafana | 20 min | 1h30 | Orienté infra |
+| **n8n** | 10 min | 45 min | Docker facile |
+
+
+
+---
+
+### Critère 2 : COMPLEXITÉ TECHNIQUE
+
+| Outil | Complexité | DevOps Requis | Notes |
+|-------|-----------|---------------|-------|
+| **Supabase** |  Très simple | 0 | Cloud managed |
+| Hasura |  Moyenne | Docker + config | Trop pour 2,5j |
+| **Metabase** |  Très simple | 0 | Cloud managed |
+| Grafana |  Simple | Docker | Mais simple |
+| **n8n** | Simple | Docker Compose | 1 fichier |
+
+
+
+---
+
+### Critère 3 : COÛTS
+
+| Outil | Coût | Plan Gratuit | Notes |
+|-------|-----|------------|-------|
+| **Supabase** | $0-25/mois |  Generous | 500 MB data, 2 projets |
+| Hasura | $0-75/mois |  Limité | Essai gratuit |
+| Xano | $0-200/mois |  Trial 14j | Payant après |
+| **Metabase** | $0-120/mois |  Cloud gratuit | Cloud limité mais OK |
+| **n8n** | $0 |  Self-hosted | Open-source |
+| Prometheus | $0 |  Open-source | Gratuit |
+
+
+
+##  ARCHITECTURE TECHNIQUE GLOBALE
+
+
+---
+
+### 1. COUCHE BASE DE DONNÉES
+
+#### Supabase Cloud
+
+
+**Schéma (hérité de Phase 1) :**
+```
+customers
+├── customer_id (PK)
+├── first_name, last_name
+├── email (UNIQUE)
+├── phone, address
+├── created_at
+└── is_active
+
+accounts
+├── account_id (PK)
+├── customer_id (FK → customers)
+├── account_type (courant, épargne, etc)
+├── balance (chiffré)
+├── created_at
+└── is_active
+
+transactions
+├── transaction_id (PK)
+├── account_id (FK → accounts)
+├── amount
+├── merchant_category
+├── location
+├── timestamp
+├── status
+└── is_fraud (0/1)
+
+cards
+├── card_id (PK)
+├── account_id (FK → accounts)
+├── card_number (chiffré)
+├── status (active/blocked)
+├── last_4_digits
+└── expiry_date
+
+audit_logs
+├── log_id (PK)
+├── user_id
+├── action
+├── table_name
+├── record_id
+├── timestamp
+├── ip_address
+└── details
+```
+
+**Row Level Security (RLS) Policies :**
+```sql
+-- Politique 1 : Client ne voit que ses comptes
+CREATE POLICY "Clients see own accounts"
+  ON accounts FOR SELECT
+  USING (customer_id = auth.uid());
+
+-- Politique 2 : Admin voit tout
+CREATE POLICY "Admin sees all"
+  ON accounts FOR ALL
+  USING (auth.role() = 'admin');
+
+-- Politique 3 : Analyst lit tout, ne modifie rien
+CREATE POLICY "Analyst read-only"
+  ON transactions FOR SELECT
+  USING (auth.role() = 'analyst');
+```
+
+**Authentification Supabase :**
+```
+Utilisateur clique "Login"
+        ↓
+Supabase Auth envoie code 2FA
+        ↓
+JWT token émis
+        ↓
+Token stocké en client (secure cookie)
+        ↓
+Toutes les requêtes incluent le JWT
+```
+
+---
+
+### 2. COUCHE API
+
+#### API REST Auto-générée par Supabase
+
+**Zéro Code Requis !**
+
+Supabase génère automatiquement les endpoints :
+
+```
+GET    /rest/v1/customers
+GET    /rest/v1/customers?customer_id=eq.123
+POST   /rest/v1/customers (insert)
+PATCH  /rest/v1/customers?customer_id=eq.123 (update)
+DELETE /rest/v1/customers?customer_id=eq.123 (delete)
+
+GET    /rest/v1/transactions?account_id=eq.456&is_fraud=eq.true
+POST   /rest/v1/transactions
+```
+
+---
+
+### 3. COUCHE DASHBOARDS
+
+#### Metabase (Cloud Gratuit)
+
+
+**Dashboards à Créer :**
+
+**Dashboard 1 : Fraudes (Analyste Sécurité)**
+```
+Composants :
+├── Carte : "Fraudes détectées aujourd'hui"
+├── Graphique ligne : Fraudes par heure (24h)
+├── Tableau : Top 20 fraudes (tri par montant)
+├── Carte géographique : Fraudes par localisation
+├── Filtre : Date range, montant min/max, localisation
+└── Bouton export : PDF/CSV
+```
+
+**Dashboard 2 : Clients (Service Client)**
+```
+Composants :
+├── Recherche client (input texte)
+├── Statistique : Nombre total clients
+├── Tableau : Tous les clients (paginated)
+├── Drill-down : Clic client → voir ses comptes/transactions
+└── Filtre : Statut (actif/bloqué), date création
+```
+
+**Dashboard 3 : Infrastructure (Admin)**
+```
+Composants :
+├── Connecter Prometheus au lieu de Supabase
+├── Graphique : CPU, RAM, Disk (temps réel)
+├── Graphique : Latence API (p50, p95, p99)
+├── Tableau : Erreurs du jour (500, 403, etc)
+├── Alerte affichée : " CPU > 80% depuis 5 min"
+└── Filtre : Serveur, période
+```
+
+
+---
+
+### 4. COUCHE AUTOMATISATION
+
+#### n8n (Self-Hosted via Docker)
+
+```
+```
+**Workflows à Créer :**
+
+**Workflow 1 : Détection Fraude (Trigger: Nouvelle Transaction)**
+```
+Trigger : Webhook Supabase (nouvelle transaction)
+    ↓
+Step 1 : Récupérer les données de transaction
+    ↓
+Step 2 : Appeler API ML Flask
+    ↓
+Step 3 : If is_fraud = true ET score > 0.8:
+    ├─ Step 4 : Envoyer alerte email
+    ├─ Step 5 : Envoyer alerte Slack
+    └─ Step 6 : Créer audit log
+    ↓
+Fin
+```
+
+**Workflow 2 : Alertes Tentatives Échouées (Trigger: Chaque 5 min)**
+```
+Trigger : Cron (toutes les 5 min)
+    ↓
+Step 1 : Requête Supabase (5 tentatives échouées en 5 min)
+    ↓
+Step 2 : If count > 5:
+    ├─ Step 3 : Email admin "Brute force détecté"
+    └─ Step 4 : Slack alert
+    ↓
+Fin
+```
+
+**Workflow 3 : Rapport Quotidien (Trigger: 8h du matin)**
+```
+Trigger : Cron (8h matin)
+    ↓
+Step 1 : Requête Supabase (stats hier)
+    ├─ Nb transactions
+    ├─ Nb fraudes
+    ├─ Top 5 marchands
+    └─ Revenus totaux
+    ↓
+Step 2 : Formater HTML email
+    ↓
+Step 3 : Envoyer email à tous les analystes
+    ↓
+Fin
+```
+
+---
+
+### 5. COUCHE MONITORING
+
+#### Prometheus + Grafana (Docker Compose)
+
+**Setup (10 minutes) :**
+
+```bash
+cat > docker-compose.yml << 'EOF'
+version: '3.9'
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  grafana_data:
+EOF
+
+# Lancer
+docker-compose up -d
+
+# Accéder à http://localhost:3000
+# Login: admin / admin
+```
+
+**Configuration Prometheus :**
+
+```yaml
+# prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'system'
+    static_configs:
+      - targets: ['localhost:9100']  # node_exporter
+
+  - job_name: 'api'
+    static_configs:
+      - targets: ['localhost:5000']  # Your Flask API
+```
+
+**Dashboards Grafana :**
+```
+Dashboard 1 : Infrastructure
+├── CPU usage (%)
+├── Memory usage (%)
+├── Disk usage (%)
+└── Network I/O
+
+Dashboard 2 : API
+├── Requests/sec
+├── Latency (p50, p95, p99)
+├── Errors/sec (by status code)
+└── Database connections
+```
+
+---
+
+### 6. ML - DÉTECTION FRAUDE
+
+#### API Flask Simple (Déploiement Render/Railway)
+
+**Code (10 lignes) :**
+
+```python
+# app.py
+from flask import Flask, request, jsonify
+import joblib
+
+app = Flask(__name__)
+model = joblib.load('fraud_model.pkl')
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    data = request.json
+    features = [
+        data['amount'],
+        data['hour_of_day'],
+        data['day_of_week'],
+        data['merchant_category_encoded'],
+        data['location_encoded']
+    ]
+    
+    prediction = model.predict([features])[0]
+    probability = model.predict_proba([features])[0][1]
+    
+    return jsonify({
+        'is_fraud': bool(prediction),
+        'fraud_score': float(probability)
+    })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+```
+
+---
+
+##  ARCHITECTURE DE SÉCURITÉ
+
+```
+```
+### RBAC (Role-Based Access Control)
+
+**4 Rôles définis :**
+
+```sql
+-- Table: users_roles
+CREATE TABLE user_roles (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL,
+  role VARCHAR(50) NOT NULL,
+  UNIQUE(user_id, role)
+);
+
+-- Rôles :
+INSERT INTO user_roles VALUES
+  ('admin-uuid', 'admin'),      -- Accès total
+  ('analyst-uuid', 'analyst'),  -- Lecture seule + alertes
+  ('csr-uuid', 'csr'),          -- Clients + blocage cartes
+  ('client-uuid', 'client');    -- Ses propres données
+```
+
+**Policies RLS par rôle :**
+
+```sql
+-- Admin voit tout
+CREATE POLICY "admin_all"
+  ON transactions
+  USING (auth.role() = 'admin');
+
+-- Analyst lit tout (SELECT seulement)
+CREATE POLICY "analyst_read_only"
+  ON transactions FOR SELECT
+  USING (auth.role() = 'analyst');
+
+-- CSR lit clients/comptes/transactions
+CREATE POLICY "csr_read_customers"
+  ON customers FOR SELECT
+  USING (auth.role() = 'csr');
+
+-- Client ne voit que ses données
+CREATE POLICY "client_own_data"
+  ON transactions FOR SELECT
+  USING (
+    customer_id = (
+      SELECT customer_id FROM accounts 
+      WHERE account_id = transactions.account_id
+      AND customer_id = auth.uid()
+    )
+  );
+```
+
+### Données Sensibles
+
+**Chiffrement (Phase 1) :**
+```
+Card Numbers   → Chiffrés en BD avec pgcrypto
+IBAN           → Chiffrés en BD avec pgcrypto
+Téléphones     → Masqués (***-****-1234)
+Emails         → Hashés (non lisibles)
+```
+
+**Audit Logs :**
+```sql
+CREATE TABLE audit_logs (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL,
+  action VARCHAR(100),      -- "VIEW_CUSTOMER", "BLOCK_CARD"
+  table_name VARCHAR(50),
+  record_id INT,
+  timestamp TIMESTAMP DEFAULT NOW(),
+  ip_address INET,
+  details JSONB
+);
+
+-- Trigger automatique sur chaque modification
+CREATE OR REPLACE FUNCTION log_action()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO audit_logs (user_id, action, table_name, record_id)
+  VALUES (auth.uid(), TG_OP, TG_TABLE_NAME, NEW.id);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Appliquer à chaque table critique
+CREATE TRIGGER audit_customers AFTER UPDATE ON customers
+FOR EACH ROW EXECUTE FUNCTION log_action();
+```
+
+---

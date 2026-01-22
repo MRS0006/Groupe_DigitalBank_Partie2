@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic API Supabase</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; background-color: #f4f7f6; color: #333; }
+        .card { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3ecf8e; padding-bottom: 10px; }
+        .status-box { padding: 15px; border-radius: 6px; margin: 20px 0; font-weight: bold; }
+        .waiting { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        pre { background: #2d3436; color: #dfe6e9; padding: 20px; border-radius: 6px; overflow-x: auto; font-size: 14px; line-height: 1.5; }
+        .info { font-size: 0.9em; color: #636e72; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Diagnostic de connexion</h1>
+    
+    <div id="status-container" class="status-box waiting">
+        ⏳ Initialisation du script...
+    </div>
+
+    <h3>Données extraites de la table <code>transactions</code> :</h3>
+    <pre id="output">Appuyez sur F12 pour voir les détails techniques dans la console.</pre>
+    
+    <div class="info">
+        Note : Si le résultat est <code>[]</code>, vérifiez vos politiques RLS ou si la table contient des données.
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+    // --- CONFIGURATION ---
+    const URL_SUPABASE = 'https://aqidktfylmamzgaskupz.supabase.co'; 
+    const KEY_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxaWRrdGZ5bG1hbXpnYXNrdXB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NjkwNDEsImV4cCI6MjA4NDU0NTA0MX0.Hr92eHXc0SDJKYmksKgDpgTdv0LkZKPoCnJp3drwG-Q';
+
+    // Initialisation du client
+    const supabaseClient = supabase.createClient(URL_SUPABASE, KEY_ANON);
+
+    async function lancerDiagnostic() {
+        const statusDiv = document.getElementById('status-container');
+        const outputPre = document.getElementById('output');
+
+        console.log("🚀 Lancement de la requête vers Supabase...");
+
+        try {
+            // Tentative de lecture de la table transactions
+            const { data, error, status, statusText } = await supabaseClient
+                .from('transactions')
+                .select('*')
+                .limit(5);
+
+            if (error) {
+                console.error("❌ Erreur API détectée :", error);
+                statusDiv.className = "status-box error";
+                statusDiv.innerText = `❌ Erreur ${status} : ${error.message}`;
+                outputPre.textContent = JSON.stringify(error, null, 2);
+            } else {
+                console.log("✅ Réponse reçue de Supabase !");
+                statusDiv.className = "status-box success";
+                statusDiv.innerText = "✅ Connexion réussie à l'API !";
+                
+                if (data.length === 0) {
+                    outputPre.textContent = "// Résultat : [] (Tableau vide)\n// La connexion fonctionne mais aucune donnée n'est renvoyée.\n// Vérifiez vos règles RLS.";
+                } else {
+                    outputPre.textContent = JSON.stringify(data, null, 2);
+                }
+            }
+        } catch (catastrophicErr) {
+            console.error("💥 Erreur critique du script :", catastrophicErr);
+            statusDiv.className = "status-box error";
+            statusDiv.innerText = "💥 Erreur critique : " + catastrophicErr.message;
+        }
+    }
+
+    // Exécution
+    lancerDiagnostic();
+</script>
+
+</body>
+</html>

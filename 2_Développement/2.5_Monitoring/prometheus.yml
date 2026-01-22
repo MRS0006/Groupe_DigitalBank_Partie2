@@ -1,0 +1,14 @@
+global:
+  scrape_interval: 15s # Fréquence de récupération des données
+
+scrape_configs:
+  # Métriques Système (Point b de ton énoncé)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # Métriques PostgreSQL Supabase (Point b de ton énoncé)
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    

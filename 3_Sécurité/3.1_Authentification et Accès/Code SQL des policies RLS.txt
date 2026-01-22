@@ -1,0 +1,93 @@
+-- ============================
+-- TABLE: transactions
+-- ============================
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+
+-- Customer Service : lecture clients
+CREATE POLICY "Customer Service read transactions"
+ON transactions
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1
+    FROM user_roles
+    WHERE user_roles.user_id = auth.uid()
+      AND user_roles.role = 'customer_service'
+  )
+);
+
+-- ============================
+-- TABLE: accounts
+-- ============================
+ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Customer Service read accounts"
+ON accounts
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1
+    FROM user_roles
+    WHERE user_roles.user_id = auth.uid()
+      AND user_roles.role = 'customer_service'
+  )
+);
+
+-- ============================
+-- TABLE: cards
+-- ============================
+ALTER TABLE cards ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Customer Service read cards"
+ON cards
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1
+    FROM user_roles
+    WHERE user_roles.user_id = auth.uid()
+      AND user_roles.role = 'customer_service'
+  )
+);
+
+-- ============================
+-- TABLE: customers
+-- ============================
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Customer Service read customers"
+ON customers
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1
+    FROM user_roles
+    WHERE user_roles.user_id = auth.uid()
+      AND user_roles.role = 'customer_service'
+  )
+);
+
+-- ============================
+-- TABLE: login_attempts
+-- ============================
+ALTER TABLE login_attempts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Customer Service read login_attempts"
+ON login_attempts
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1
+    FROM user_roles
+    WHERE user_roles.user_id = auth.uid()
+      AND user_roles.role = 'customer_service'
+  )
+);
+
+-- ============================
+-- TABLE: audit_logs
+-- ============================
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+
+-- Customer Service n'a normalement pas accès aux logs sensibles
+-- On ne crée pas de policy pour eux ici
